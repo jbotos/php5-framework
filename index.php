@@ -18,6 +18,9 @@ define("APP_PATH", dirname( __FILE__ ) . "/" );
 // we will use this to ensure scripts are not call from outside the framework
 define("PCAFW", true );
 
+// @TODO make a setting
+date_default_timezone_set("America/Phoenix");
+
 /**
  * Magic auto load function
  * used to include the appropiate -controller- files when theya re needed
@@ -33,8 +36,32 @@ function __autoload($class_name)
 require_once('PCARegistry/pcaregistry.class.php');
 $registry = PCARegistry::singleton();
 
-// print out the framework name - just to check everything is working
-print $registry->getFrameworkName();
-print $registry->storeObject('template','template');
+// store those core objects
+$registry->storeCoreObjects();
+
+// create a database connection
+$registry->getObject('db')->newConnection('localhost', 'john', 'hondarul', 'php5');
+
+// set the default skin setting (we will store these in the database later...)
+$registry->storeSetting('default', 'skin');
+
+// populate our page object from a template file
+$registry->getObject('template')->buildFromTemplates('main.tpl.php');
+
+// cache a query of our members table
+$cache = $registry->getObject('db')->cacheQuery('SELECT * FROM members');
+
+// assign this to the members tag
+$registry->getObject('template')->getPage()->addTag('members', array('SQL', $cache) );
+
+// set the page title
+$registry->getObject('template')->getPage()->setTitle('Our members');
+
+// parse it all, and spit it out
+$registry->getObject('template')->parseOutput();
+print $registry->getObject('template')->getPage()->getContent();
 
 exit();
+
+
+?>
